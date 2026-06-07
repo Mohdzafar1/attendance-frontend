@@ -247,7 +247,7 @@ const AttendanceRecords = () => {
   return (
     <div>
       {/* Statistics Cards */}
-      <div className="stats-grid">
+      {/* <div className="stats-grid">
         <div className="stat-card">
           <FiCalendar size={32} color="#667eea" />
           <div className="stat-value">{stats.total}</div>
@@ -279,7 +279,7 @@ const AttendanceRecords = () => {
           </div>
           <div>Total Hours</div>
         </div>
-      </div>
+      </div> */}
 
       {/* Main Card */}
       <div className="card">
