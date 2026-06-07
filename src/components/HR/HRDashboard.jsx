@@ -80,39 +80,6 @@ const HrDashboard = () => {
 
   return (
     <div>
-      {/* Statistics Cards */}
-      <div className="stats-grid">
-        <div className="stat-card">
-          <FiUsers size={32} color="#667eea" />
-          <div className="stat-value">{stats.total}</div>
-          <div>Total Records</div>
-        </div>
-        
-        <div className="stat-card">
-          <FiCheckCircle size={32} color="#28a745" />
-          <div className="stat-value" style={{ color: '#28a745' }}>{stats.present}</div>
-          <div>Present</div>
-        </div>
-        
-        <div className="stat-card">
-          <FiXCircle size={32} color="#dc3545" />
-          <div className="stat-value" style={{ color: '#dc3545' }}>{stats.absent}</div>
-          <div>Absent</div>
-        </div>
-        
-        <div className="stat-card">
-          <FiClock size={32} color="#ffc107" />
-          <div className="stat-value" style={{ color: '#ffc107' }}>{stats.late}</div>
-          <div>Late Arrivals</div>
-        </div>
-        
-        <div className="stat-card">
-          <FiTrendingUp size={32} color="#17a2b8" />
-          <div className="stat-value" style={{ color: '#17a2b8' }}>{formatHours(stats.totalHours)}</div>
-          <div>Total Hours</div>
-        </div>
-      </div>
-
       {/* Main Card */}
         <AttendanceRecords/>
     </div>

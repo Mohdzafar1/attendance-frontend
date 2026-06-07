@@ -58,7 +58,11 @@ const AttendanceHistory = () => {
               ) : (
                 history.map((record) => (
                   <tr key={record.id}>
-                    <td>{new Date(record.attendance_date).toLocaleDateString()}</td>
+                    {/* <td>{new Date(record.attendance_date).toLocaleDateString()}</td> */}
+                     <td>
+                        {new Date(record.attendance_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+
+                     </td>
                     <td>{record.clock_in_time ? new Date(record.clock_in_time).toLocaleTimeString() : '-'}</td>
                     <td>{record.clock_out_time ? new Date(record.clock_out_time).toLocaleTimeString() : '-'}</td>
                     <td>{record.total_hours || '-'}</td>

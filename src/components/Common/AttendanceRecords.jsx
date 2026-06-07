@@ -11,7 +11,9 @@ import {
   FiXCircle,
   FiFilter,
   FiUser,
-  FiBriefcase
+  FiBriefcase,
+  FiTrendingUp,
+  FiMapPin
 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
@@ -19,37 +21,107 @@ const EMPTY_FILTERS = { start_date: '', end_date: '', department: '', status: ''
 
 const AttendanceRecords = () => {
   const [attendance, setAttendance] = useState([]);
-  const [allAttendance, setAllAttendance] = useState([]); // master copy for dept list
+  const [allAttendance, setAllAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ total: 0, present: 0, absent: 0, late: 0, totalHours: 0 });
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [showFilters, setShowFilters] = useState(true);
   const [exporting, setExporting] = useState(false);
 
-  // ✅ Compute hours directly from timestamps — never trust DB total_hours
-  const computeHours = (record) => {
-    if (!record.clock_in_time || !record.clock_out_time) return 0;
-    const diffMs = new Date(record.clock_out_time) - new Date(record.clock_in_time);
-    return diffMs > 0 ? diffMs / (1000 * 60 * 60) : 0;
+  // ✅ Format time without seconds (HH:MM AM/PM)
+  const formatTime = (dateTime) => {
+    if (!dateTime) return '-';
+    
+    const date = new Date(dateTime);
+    if (isNaN(date.getTime())) return '-';
+    
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
   };
 
+  // ✅ Format date consistently
+  const formatDate = (date) => {
+    if (!date) return '-';
+    
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '-';
+    
+    return d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  // ✅ Improved hours calculation with better precision
+  const calculateHours = (clockIn, clockOut) => {
+    if (!clockIn || !clockOut) return 0;
+    
+    const start = new Date(clockIn);
+    const end = new Date(clockOut);
+    
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
+    if (end <= start) return 0;
+    
+    const diffMs = end - start;
+    const diffHours = diffMs / (1000 * 60 * 60);
+    
+    // Round to 2 decimal places
+    return Math.round(diffHours * 100) / 100;
+  };
+
+  // ✅ Compute hours for a single record
+  const computeRecordHours = (record) => {
+    // First try to use total_hours from DB if it exists and is valid
+    if (record.total_hours && record.total_hours > 0) {
+      return parseFloat(record.total_hours);
+    }
+    // Otherwise calculate from timestamps
+    return calculateHours(record.clock_in_time, record.clock_out_time);
+  };
+
+  // ✅ Calculate statistics from data
   const calculateStats = (data) => {
     const total = data.length;
     const present = data.filter(r => r.status === 'present').length;
-    const absent  = data.filter(r => r.status === 'absent').length;
-    const late    = data.filter(r => r.status === 'late').length;
-    const totalHours = data.reduce((sum, r) => sum + computeHours(r), 0);
-    setStats({ total, present, absent, late, totalHours });
+    const absent = data.filter(r => r.status === 'absent').length;
+    const late = data.filter(r => r.status === 'late').length;
+    
+    // Calculate total hours using the compute function
+    const totalHours = data.reduce((sum, record) => {
+      return sum + computeRecordHours(record);
+    }, 0);
+    
+    setStats({ 
+      total, 
+      present, 
+      absent, 
+      late, 
+      totalHours: Math.round(totalHours * 100) / 100 
+    });
   };
 
-  // ✅ FIX: Accept filters as a parameter so the function always uses
-  //    the latest values — avoids stale closure bugs entirely.
+  // ✅ Fetch attendance with filters
   const fetchAttendance = useCallback(async (activeFilters) => {
     setLoading(true);
     try {
       const response = await hrService.getAllAttendance(activeFilters);
-      setAttendance(response.data);
-      calculateStats(response.data);
+      const data = response.data;
+      
+      // Process data to ensure total_hours is set correctly
+      const processedData = data.map(record => ({
+        ...record,
+        computed_hours: computeRecordHours(record),
+        formatted_clock_in: formatTime(record.clock_in_time),
+        formatted_clock_out: formatTime(record.clock_out_time),
+        formatted_date: formatDate(record.attendance_date)
+      }));
+      
+      setAttendance(processedData);
+      calculateStats(processedData);
     } catch (error) {
       console.error('Error fetching attendance:', error);
       toast.error('Failed to fetch attendance records');
@@ -58,17 +130,28 @@ const AttendanceRecords = () => {
     }
   }, []);
 
-  // Load all records on mount (also populates dept dropdown)
+  // Load all records on mount
   useEffect(() => {
     const loadAll = async () => {
       setLoading(true);
       try {
         const response = await hrService.getAllAttendance(EMPTY_FILTERS);
-        setAllAttendance(response.data);
-        setAttendance(response.data);
-        calculateStats(response.data);
+        const data = response.data;
+        
+        const processedData = data.map(record => ({
+          ...record,
+          computed_hours: computeRecordHours(record),
+          formatted_clock_in: formatTime(record.clock_in_time),
+          formatted_clock_out: formatTime(record.clock_out_time),
+          formatted_date: formatDate(record.attendance_date)
+        }));
+        
+        setAllAttendance(processedData);
+        setAttendance(processedData);
+        calculateStats(processedData);
       } catch (error) {
         toast.error('Failed to fetch attendance records');
+        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -76,44 +159,55 @@ const AttendanceRecords = () => {
     loadAll();
   }, []);
 
-  // ✅ FIX: Apply — pass current filters directly, no closure issue
+  // Apply filters
   const handleFilter = () => {
     fetchAttendance(filters);
   };
 
-  // ✅ FIX: Reset — pass empty filters directly, no setTimeout hack needed
+  // Reset filters
   const resetFilters = () => {
     const empty = EMPTY_FILTERS;
     setFilters(empty);
     fetchAttendance(empty);
   };
 
+  // Format hours for display
   const formatHours = (hours) => {
-    if (!hours || hours <= 0) return '-';
+    if (!hours || hours <= 0) return '0 hrs';
+    
     const hrs = Math.floor(hours);
     const mins = Math.round((hours - hrs) * 60);
-    if (hrs === 0) return `${mins} min`;
+    
+    if (hrs === 0) return `${mins} min${mins > 1 ? 's' : ''}`;
     if (mins === 0) return `${hrs} hr${hrs > 1 ? 's' : ''}`;
-    return `${hrs} hr ${mins} min`;
+    return `${hrs} hr${hrs > 1 ? 's' : ''} ${mins} min${mins > 1 ? 's' : ''}`;
   };
 
+  // Format hours for display (decimal)
+  const formatHoursDecimal = (hours) => {
+    if (!hours || hours <= 0) return '0.00';
+    return hours.toFixed(2);
+  };
+
+  // Export to CSV
   const exportToCSV = () => {
     setExporting(true);
     try {
       const headers = ['Employee', 'Department', 'Date', 'Clock In', 'Clock Out', 'Total Hours', 'Status', 'Location'];
       const csvData = attendance.map(record => {
-        const hours = computeHours(record);
+        const hours = computeRecordHours(record);
         return [
           record.full_name,
           record.department || '-',
-          new Date(record.attendance_date).toLocaleDateString(),
-          record.clock_in_time ? new Date(record.clock_in_time).toLocaleTimeString() : '-',
-          record.clock_out_time ? new Date(record.clock_out_time).toLocaleTimeString() : '-',
-          hours > 0 ? formatHours(hours) : '0',
+          formatDate(record.attendance_date),
+          formatTime(record.clock_in_time),
+          formatTime(record.clock_out_time),
+          hours > 0 ? hours.toFixed(2) : '0',
           record.status,
           record.clock_in_location || '-'
         ];
       });
+      
       const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
@@ -123,13 +217,15 @@ const AttendanceRecords = () => {
       a.click();
       URL.revokeObjectURL(url);
       toast.success('Report exported successfully');
-    } catch {
+    } catch (error) {
+      console.error('Export error:', error);
       toast.error('Failed to export report');
     } finally {
       setExporting(false);
     }
   };
 
+  // Get status badge
   const getStatusBadge = (status) => {
     const badges = {
       present:  { class: 'status-present',  icon: <FiCheckCircle />, text: 'Present' },
@@ -145,11 +241,47 @@ const AttendanceRecords = () => {
     );
   };
 
-  // ✅ Use allAttendance (unfiltered) for dept list so it never empties after filtering
+  // Get departments from all attendance (unfiltered)
   const departments = [...new Set(allAttendance.map(a => a.department).filter(Boolean))];
 
   return (
     <div>
+      {/* Statistics Cards */}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <FiCalendar size={32} color="#667eea" />
+          <div className="stat-value">{stats.total}</div>
+          <div>Total Records</div>
+        </div>
+        
+        <div className="stat-card">
+          <FiCheckCircle size={32} color="#28a745" />
+          <div className="stat-value" style={{ color: '#28a745' }}>{stats.present}</div>
+          <div>Present</div>
+        </div>
+        
+        <div className="stat-card">
+          <FiXCircle size={32} color="#dc3545" />
+          <div className="stat-value" style={{ color: '#dc3545' }}>{stats.absent}</div>
+          <div>Absent</div>
+        </div>
+        
+        <div className="stat-card">
+          <FiClock size={32} color="#ffc107" />
+          <div className="stat-value" style={{ color: '#ffc107' }}>{stats.late}</div>
+          <div>Late Arrivals</div>
+        </div>
+        
+        <div className="stat-card">
+          <FiTrendingUp size={32} color="#17a2b8" />
+          <div className="stat-value" style={{ color: '#17a2b8', fontSize: '24px' }}>
+            {formatHoursDecimal(stats.totalHours)}
+          </div>
+          <div>Total Hours</div>
+        </div>
+      </div>
+
+      {/* Main Card */}
       <div className="card">
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
@@ -210,7 +342,7 @@ const AttendanceRecords = () => {
                 </select>
               </div>
 
-              <div className="form-group" style={{ marginBottom: 0 }}>
+              {/* <div className="form-group" style={{ marginBottom: 0 }}>
                 <label style={{ fontSize: '12px', color: '#666', marginBottom: '5px', display: 'block' }}>
                   <FiCheckCircle /> Status
                 </label>
@@ -223,7 +355,7 @@ const AttendanceRecords = () => {
                   <option value="late">Late</option>
                   <option value="half_day">Half Day</option>
                 </select>
-              </div>
+              </div> */}
             </div>
 
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
@@ -268,7 +400,11 @@ const AttendanceRecords = () => {
               </thead>
               <tbody>
                 {attendance.map((record) => {
-                  const computedHours = computeHours(record);
+                  const hours = computeRecordHours(record);
+                  const clockInTime = formatTime(record.clock_in_time);
+                  const clockOutTime = formatTime(record.clock_out_time);
+                  const dateStr = formatDate(record.attendance_date);
+                  
                   return (
                     <tr key={record.id} style={{ borderBottom: '1px solid #e0e0e0' }}>
                       <td style={{ padding: '12px' }}>
@@ -276,27 +412,43 @@ const AttendanceRecords = () => {
                           <FiUser style={{ color: '#667eea' }} />
                           <strong>{record.full_name}</strong>
                         </div>
+                        <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
+                          {record.department || '-'}
+                        </div>
                       </td>
                       <td style={{ padding: '12px' }}>{record.department || '-'}</td>
+                      <td style={{ padding: '12px', fontWeight: '500' }}>{dateStr}</td>
                       <td style={{ padding: '12px' }}>
-                        {new Date(record.attendance_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {clockInTime !== '-' ? (
+                          <span style={{ color: '#28a745', fontWeight: '500' }}>
+                            {clockInTime}
+                          </span>
+                        ) : '-'}
                       </td>
                       <td style={{ padding: '12px' }}>
-                        {record.clock_in_time
-                          ? <span style={{ color: '#28a745' }}>{new Date(record.clock_in_time).toLocaleTimeString()}</span>
-                          : '-'}
+                        {clockOutTime !== '-' ? (
+                          <span style={{ color: '#dc3545', fontWeight: '500' }}>
+                            {clockOutTime}
+                          </span>
+                        ) : '-'}
                       </td>
-                      <td style={{ padding: '12px' }}>
-                        {record.clock_out_time
-                          ? <span style={{ color: '#dc3545' }}>{new Date(record.clock_out_time).toLocaleTimeString()}</span>
-                          : '-'}
-                      </td>
-                      <td style={{ padding: '12px', fontWeight: 'bold' }}>
-                        {formatHours(computedHours)}
+                      <td style={{ padding: '12px', fontWeight: 'bold', color: '#17a2b8' }}>
+                        {hours > 0 ? (
+                          <>
+                            {formatHours(hours)}
+                            <span style={{ fontSize: '11px', color: '#999', marginLeft: '5px' }}>
+                              ({hours.toFixed(2)} hrs)
+                            </span>
+                          </>
+                        ) : '-'}
                       </td>
                       <td style={{ padding: '12px' }}>{getStatusBadge(record.status)}</td>
                       <td style={{ padding: '12px', fontSize: '12px', color: '#666' }}>
-                        {record.clock_in_location || '-'}
+                        {record.clock_in_location ? (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <FiMapPin size={12} /> {record.clock_in_location}
+                          </span>
+                        ) : '-'}
                       </td>
                     </tr>
                   );
@@ -314,11 +466,25 @@ const AttendanceRecords = () => {
               <strong>{attendance.length}</strong>
               <span style={{ color: '#666' }}> records</span>
             </div>
-            <div style={{ display: 'flex', gap: '20px' }}>
-              <div><span style={{ color: '#28a745' }}>● Present:</span><strong style={{ marginLeft: '5px' }}>{stats.present}</strong></div>
-              <div><span style={{ color: '#dc3545' }}>● Absent:</span><strong style={{ marginLeft: '5px' }}>{stats.absent}</strong></div>
-              <div><span style={{ color: '#ffc107' }}>● Late:</span><strong style={{ marginLeft: '5px' }}>{stats.late}</strong></div>
-              <div><span style={{ color: '#17a2b8' }}>⏱ Total Hours:</span><strong style={{ marginLeft: '5px' }}>{formatHours(stats.totalHours)}</strong></div>
+            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+              <div>
+                <span style={{ color: '#28a745' }}>● Present:</span>
+                <strong style={{ marginLeft: '5px' }}>{stats.present}</strong>
+              </div>
+              <div>
+                <span style={{ color: '#dc3545' }}>● Absent:</span>
+                <strong style={{ marginLeft: '5px' }}>{stats.absent}</strong>
+              </div>
+              <div>
+                <span style={{ color: '#ffc107' }}>● Late:</span>
+                <strong style={{ marginLeft: '5px' }}>{stats.late}</strong>
+              </div>
+              <div>
+                <span style={{ color: '#17a2b8' }}>⏱ Total Hours:</span>
+                <strong style={{ marginLeft: '5px' }}>
+                  {formatHours(stats.totalHours)} ({stats.totalHours.toFixed(2)} hrs)
+                </strong>
+              </div>
             </div>
           </div>
         )}
