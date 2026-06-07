@@ -636,3 +636,483 @@ textarea {
 .modal-overlay {
   animation: fadeIn 0.3s ease;
 }
+
+
+
+
+/* ============================================
+   RESPONSIVE SIDEBAR STYLES
+   ============================================ */
+
+/* Mobile Header */
+.mobile-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 999;
+}
+
+.hamburger-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #667eea;
+  transition: all 0.3s;
+}
+
+.hamburger-btn:hover {
+  background: #f0f0f0;
+}
+
+.mobile-logo h3 {
+  font-size: 18px;
+  color: #667eea;
+  margin: 0;
+}
+
+.mobile-user {
+  width: 36px;
+  height: 36px;
+  background: #f0f4ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #667eea;
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+/* Mobile Sidebar - Hidden by default */
+.mobile-sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 280px;
+  height: 100vh;
+  background: white;
+  z-index: 1001;
+  transition: left 0.3s ease;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  display: block !important;
+}
+
+/* When open, show the sidebar */
+.mobile-sidebar.open {
+  left: 0;
+}
+
+/* Desktop Sidebar - Always visible */
+@media (min-width: 769px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 260px;
+    height: 100vh;
+    background: white;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .mobile-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+  }
+}
+
+/* Close Sidebar Button */
+.close-sidebar-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  transition: all 0.3s;
+  width: 32px;
+  height: 32px;
+}
+
+.close-sidebar-btn:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+/* Sidebar Header */
+.sidebar-header {
+  padding: 25px 20px;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+  position: relative;
+}
+
+.sidebar-header h3 {
+  color: #667eea;
+  font-size: 20px;
+  margin: 0;
+}
+
+.user-info-sidebar {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 12px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.user-details {
+  text-align: left;
+  flex: 1;
+}
+
+.user-details .user-name {
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  font-size: 14px;
+}
+
+.user-details .user-role {
+  font-size: 11px;
+  color: #667eea;
+  margin: 4px 0 0;
+  font-weight: 500;
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+  padding: 20px 0;
+  flex: 1;
+}
+
+.nav-item {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin: 4px 12px;
+  border-radius: 10px;
+}
+
+.nav-item:hover {
+  background: #f5f5f5;
+  color: #667eea;
+}
+
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  color: #667eea;
+}
+
+.nav-item svg {
+  font-size: 20px;
+}
+
+/* Mobile User Profile */
+.mobile-user-profile {
+  padding: 20px;
+  border-top: 1px solid #e0e0e0;
+  margin-top: auto;
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+.profile-info svg {
+  color: #667eea;
+  font-size: 24px;
+}
+
+.profile-name {
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  font-size: 14px;
+}
+
+.profile-email {
+  font-size: 11px;
+  color: #999;
+  margin: 2px 0;
+}
+
+.profile-role {
+  font-size: 10px;
+  color: #667eea;
+  margin: 0;
+  font-weight: 600;
+}
+
+.logout-btn-mobile {
+  width: 100%;
+  padding: 12px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.logout-btn-mobile:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+/* Sidebar Footer (Desktop Logout) */
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.logout-btn-sidebar {
+  width: 100%;
+  padding: 10px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s;
+}
+
+.logout-btn-sidebar:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+/* Main Content Adjustment */
+.main-content {
+  flex: 1;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+/* Desktop View */
+@media (min-width: 769px) {
+  .main-content {
+    margin-left: 260px;
+  }
+}
+
+/* Mobile View */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important;
+    padding-top: 80px;
+    padding-bottom: 20px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .card {
+    padding: 15px;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+  }
+  
+  table {
+    font-size: 12px;
+  }
+  
+  th, td {
+    padding: 8px !important;
+  }
+}
+
+/* Small Mobile View */
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .card-title {
+    font-size: 16px;
+  }
+  
+  .modal-content {
+    width: 95%;
+    margin: 10px;
+    padding: 15px;
+  }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Scrollbar for mobile sidebar */
+.mobile-sidebar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.mobile-sidebar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.mobile-sidebar::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+/* Sidebar Navigation - Fix label visibility */
+.sidebar-nav {
+  padding: 20px 0;
+  flex: 1;
+}
+
+.nav-item {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin: 4px 12px;
+  border-radius: 10px;
+  color: #333 !important; /* Force text color */
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #667eea;
+  font-size: 20px;
+}
+
+.nav-label {
+  flex: 1;
+  color: #333 !important; /* Force text color */
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.nav-item:hover {
+  background: #f5f5f5;
+}
+
+.nav-item:hover .nav-label {
+  color: #667eea !important;
+}
+
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+}
+
+.nav-item.active .nav-label {
+  color: #667eea !important;
+  font-weight: 600;
+}
+
+.nav-item.active .nav-icon {
+  color: #667eea;
+}
+/* Animation for overlay */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Mobile main content adjustment */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0 !important;
+    padding-top: 70px !important;
+  }
+}
+
+/* Ensure labels are visible on mobile */
+.nav-label {
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Sidebar text visibility */
+.sidebar div {
+  color: #333;
+}
