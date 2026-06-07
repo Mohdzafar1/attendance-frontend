@@ -34,6 +34,25 @@ const UserManagement = () => {
     }
   };
 
+  // Reset form to empty values
+  const resetForm = () => {
+    setFormData({
+      username: '',
+      email: '',
+      password: '',
+      role_id: 3,
+      full_name: '',
+      department: '',
+      employee_code: ''
+    });
+  };
+
+  // Open Add User Modal with empty form
+  const openAddModal = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -41,15 +60,7 @@ const UserManagement = () => {
       toast.success('User created successfully');
       setShowModal(false);
       fetchUsers();
-      setFormData({
-        username: '',
-        email: '',
-        password: '',
-        role_id: 3,
-        full_name: '',
-        department: '',
-        employee_code: ''
-      });
+      resetForm();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to create user');
     }
@@ -64,7 +75,8 @@ const UserManagement = () => {
       role_id: user.role_id,
       full_name: user.full_name || '',
       department: user.department || '',
-      employee_code: user.employee_code || ''
+      employee_code: user.employee_code || '',
+      is_active: user.is_active
     });
     setShowEditModal(true);
   };
@@ -88,15 +100,7 @@ const UserManagement = () => {
       setShowEditModal(false);
       setEditingUser(null);
       fetchUsers();
-      setFormData({
-        username: '',
-        email: '',
-        password: '',
-        role_id: 3,
-        full_name: '',
-        department: '',
-        employee_code: ''
-      });
+      resetForm();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update user');
     }
@@ -139,7 +143,7 @@ const UserManagement = () => {
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h3 className="card-title" style={{ marginBottom: 0 }}>User Management</h3>
-          <button className="btn-primary" onClick={() => setShowModal(true)}>
+          <button className="btn-primary" onClick={openAddModal}>
             + Add New User
           </button>
         </div>
@@ -245,6 +249,7 @@ const UserManagement = () => {
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   required
+                  placeholder="Enter username"
                 />
               </div>
               
@@ -255,6 +260,7 @@ const UserManagement = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
+                  placeholder="Enter email address"
                 />
               </div>
               
@@ -265,6 +271,7 @@ const UserManagement = () => {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required
+                  placeholder="Enter password"
                 />
               </div>
               
@@ -274,6 +281,7 @@ const UserManagement = () => {
                   type="text"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  placeholder="Enter full name"
                 />
               </div>
               
@@ -283,6 +291,7 @@ const UserManagement = () => {
                   type="text"
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  placeholder="Enter department"
                 />
               </div>
               
@@ -292,6 +301,7 @@ const UserManagement = () => {
                   type="text"
                   value={formData.employee_code}
                   onChange={(e) => setFormData({ ...formData, employee_code: e.target.value })}
+                  placeholder="Enter employee code"
                 />
               </div>
               
@@ -368,6 +378,7 @@ const UserManagement = () => {
                   type="text"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                  placeholder="Enter full name"
                 />
               </div>
               
@@ -377,6 +388,7 @@ const UserManagement = () => {
                   type="text"
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                  placeholder="Enter department"
                 />
               </div>
               
@@ -386,6 +398,7 @@ const UserManagement = () => {
                   type="text"
                   value={formData.employee_code}
                   onChange={(e) => setFormData({ ...formData, employee_code: e.target.value })}
+                  placeholder="Enter employee code"
                 />
               </div>
               
