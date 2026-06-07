@@ -1,34 +1,149 @@
-// Date and Time Helpers
-export const formatDate = (date) => {
+// ============================================
+// DATE AND TIME HELPERS WITH TIMEZONE SUPPORT
+// ============================================
+
+// Get user's local timezone
+export const getUserTimezone = () => {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+};
+
+// Convert UTC to Local for display
+export const utcToLocal = (utcDate) => {
+  if (!utcDate) return null;
+  const date = new Date(utcDate);
+  if (isNaN(date.getTime())) return null;
+  return date;
+};
+
+// Format Date (without time)
+export const formatDate = (date, useUTC = false) => {
   if (!date) return '-';
-  const d = new Date(date);
+  
+  let d;
+  if (useUTC && typeof date === 'string') {
+    // If date is a string and we want UTC, treat it as UTC
+    d = new Date(date + 'T00:00:00Z');
+  } else {
+    d = new Date(date);
+  }
+  
+  if (isNaN(d.getTime())) return '-';
+  
   return d.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
+    timeZone: useUTC ? 'UTC' : getUserTimezone()
   });
 };
 
-export const formatTime = (date) => {
+// Format Time only
+export const formatTime = (date, useUTC = false) => {
   if (!date) return '-';
+  
   const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
+  
   return d.toLocaleTimeString('en-US', {
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
+    hour12: true,
+    timeZone: useUTC ? 'UTC' : getUserTimezone()
   });
 };
 
-export const formatDateTime = (date) => {
+// Format DateTime (Date + Time)
+export const formatDateTime = (date, useUTC = false) => {
   if (!date) return '-';
-  return `${formatDate(date)} ${formatTime(date)}`;
+  
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
+  
+  // For correction requests, always display in local time
+  return d.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+    timeZone: getUserTimezone()
+  });
 };
 
+// Format for API (send as UTC ISO string)
+export const toUTCISO = (localDate) => {
+  if (!localDate) return null;
+  const date = new Date(localDate);
+  return date.toISOString();
+};
+
+// Format for datetime-local input
+export const toDateTimeLocal = (date) => {
+  if (!date) return '';
+  
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '';
+  
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+// Parse datetime-local input to UTC for API
+export const fromDateTimeLocalToUTC = (localDateTime) => {
+  if (!localDateTime) return null;
+  const date = new Date(localDateTime);
+  return date.toISOString();
+};
+
+// Get current date in YYYY-MM-DD format
 export const getCurrentDate = () => {
-  return new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
+// Get current time in HH:MM format
 export const getCurrentTime = () => {
-  return new Date().toLocaleTimeString();
+  const now = new Date();
+  return now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+};
+
+// Get current datetime in ISO format
+export const getCurrentDateTime = () => {
+  return new Date().toISOString();
+};
+
+// Display relative time (e.g., "2 hours ago")
+export const getRelativeTime = (date) => {
+  if (!date) return '-';
+  
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
+  
+  const now = new Date();
+  const diffMs = now - d;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  
+  return formatDate(date);
 };
 
 // Status Helpers
@@ -82,8 +197,8 @@ export const formatDuration = (hours) => {
   const hrs = Math.floor(hours);
   const mins = Math.round((hours - hrs) * 60);
   if (hrs === 0) return `${mins} mins`;
-  if (mins === 0) return `${hrs} hrs`;
-  return `${hrs} hrs ${mins} mins`;
+  if (mins === 0) return `${hrs} hr${hrs > 1 ? 's' : ''}`;
+  return `${hrs} hr${hrs > 1 ? 's' : ''} ${mins} min${mins > 1 ? 's' : ''}`;
 };
 
 // Validation Helpers
@@ -110,7 +225,7 @@ export const isSameDay = (date1, date2) => {
 // Formatting Helpers
 export const capitalizeFirstLetter = (string) => {
   if (!string) return '';
-  return string.charAt(0).toUpperCase() + string.slice(1);
+  return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
 };
 
 export const truncateText = (text, maxLength) => {
@@ -180,7 +295,7 @@ export const exportToCSV = (data, filename) => {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${filename}.csv`;
+  link.download = `${filename}_${getCurrentDate()}.csv`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -323,6 +438,13 @@ const helpers = {
   formatDateTime,
   getCurrentDate,
   getCurrentTime,
+  getCurrentDateTime,
+  getUserTimezone,
+  utcToLocal,
+  toUTCISO,
+  toDateTimeLocal,
+  fromDateTimeLocalToUTC,
+  getRelativeTime,
   getAttendanceStatus,
   getStatusColor,
   getStatusBadgeClass,
