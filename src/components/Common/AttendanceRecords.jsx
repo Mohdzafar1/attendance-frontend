@@ -19,6 +19,142 @@ import toast from 'react-hot-toast';
 
 const EMPTY_FILTERS = { start_date: '', end_date: '', department: '', status: '' };
 
+/* ─── Responsive styles injected once ─── */
+const responsiveCSS = `
+  .ar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .ar-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .ar-filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+
+  .ar-filter-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  .ar-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ar-table {
+    width: 100%;
+    min-width: 700px;
+    border-collapse: collapse;
+  }
+
+  .ar-table th,
+  .ar-table td {
+    padding: 12px 10px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .ar-table thead tr {
+    background: #f8f9fa;
+  }
+
+  .ar-table tbody tr {
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .ar-footer {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .ar-footer-stats {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  /* Card-style rows on very small screens */
+  @media (max-width: 600px) {
+    .ar-header-title {
+      font-size: 15px !important;
+    }
+
+    .ar-btn {
+      font-size: 13px;
+      padding: 7px 12px !important;
+    }
+
+    .ar-filters-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ar-filter-actions {
+      justify-content: stretch;
+    }
+
+    .ar-filter-actions button {
+      flex: 1;
+      justify-content: center;
+    }
+
+    /* Stack employee name + department col on mobile */
+    .ar-dept-col {
+      display: none;
+    }
+
+    .ar-footer {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .ar-footer-stats {
+      gap: 10px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .ar-table th,
+    .ar-table td {
+      padding: 10px 8px;
+      font-size: 12px;
+    }
+
+    .ar-location-col {
+      display: none;
+    }
+  }
+`;
+
+/* Inject CSS once */
+if (typeof document !== 'undefined' && !document.getElementById('ar-responsive-css')) {
+  const style = document.createElement('style');
+  style.id = 'ar-responsive-css';
+  style.textContent = responsiveCSS;
+  document.head.appendChild(style);
+}
+
 const AttendanceRecords = () => {
   const [attendance, setAttendance] = useState([]);
   const [allAttendance, setAllAttendance] = useState([]);
@@ -31,10 +167,8 @@ const AttendanceRecords = () => {
   // ✅ Format time without seconds (HH:MM AM/PM)
   const formatTime = (dateTime) => {
     if (!dateTime) return '-';
-    
     const date = new Date(dateTime);
     if (isNaN(date.getTime())) return '-';
-    
     return date.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
@@ -45,10 +179,8 @@ const AttendanceRecords = () => {
   // ✅ Format date consistently
   const formatDate = (date) => {
     if (!date) return '-';
-    
     const d = new Date(date);
     if (isNaN(d.getTime())) return '-';
-    
     return d.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -59,27 +191,20 @@ const AttendanceRecords = () => {
   // ✅ Improved hours calculation with better precision
   const calculateHours = (clockIn, clockOut) => {
     if (!clockIn || !clockOut) return 0;
-    
     const start = new Date(clockIn);
     const end = new Date(clockOut);
-    
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return 0;
     if (end <= start) return 0;
-    
     const diffMs = end - start;
     const diffHours = diffMs / (1000 * 60 * 60);
-    
-    // Round to 2 decimal places
     return Math.round(diffHours * 100) / 100;
   };
 
   // ✅ Compute hours for a single record
   const computeRecordHours = (record) => {
-    // First try to use total_hours from DB if it exists and is valid
     if (record.total_hours && record.total_hours > 0) {
       return parseFloat(record.total_hours);
     }
-    // Otherwise calculate from timestamps
     return calculateHours(record.clock_in_time, record.clock_out_time);
   };
 
@@ -89,12 +214,9 @@ const AttendanceRecords = () => {
     const present = data.filter(r => r.status === 'present').length;
     const absent = data.filter(r => r.status === 'absent').length;
     const late = data.filter(r => r.status === 'late').length;
-    
-    // Calculate total hours using the compute function
     const totalHours = data.reduce((sum, record) => {
       return sum + computeRecordHours(record);
     }, 0);
-    
     setStats({ 
       total, 
       present, 
@@ -110,8 +232,6 @@ const AttendanceRecords = () => {
     try {
       const response = await hrService.getAllAttendance(activeFilters);
       const data = response.data;
-      
-      // Process data to ensure total_hours is set correctly
       const processedData = data.map(record => ({
         ...record,
         computed_hours: computeRecordHours(record),
@@ -119,7 +239,6 @@ const AttendanceRecords = () => {
         formatted_clock_out: formatTime(record.clock_out_time),
         formatted_date: formatDate(record.attendance_date)
       }));
-      
       setAttendance(processedData);
       calculateStats(processedData);
     } catch (error) {
@@ -137,7 +256,6 @@ const AttendanceRecords = () => {
       try {
         const response = await hrService.getAllAttendance(EMPTY_FILTERS);
         const data = response.data;
-        
         const processedData = data.map(record => ({
           ...record,
           computed_hours: computeRecordHours(record),
@@ -145,7 +263,6 @@ const AttendanceRecords = () => {
           formatted_clock_out: formatTime(record.clock_out_time),
           formatted_date: formatDate(record.attendance_date)
         }));
-        
         setAllAttendance(processedData);
         setAttendance(processedData);
         calculateStats(processedData);
@@ -174,10 +291,8 @@ const AttendanceRecords = () => {
   // Format hours for display
   const formatHours = (hours) => {
     if (!hours || hours <= 0) return '0 hrs';
-    
     const hrs = Math.floor(hours);
     const mins = Math.round((hours - hrs) * 60);
-    
     if (hrs === 0) return `${mins} min${mins > 1 ? 's' : ''}`;
     if (mins === 0) return `${hrs} hr${hrs > 1 ? 's' : ''}`;
     return `${hrs} hr${hrs > 1 ? 's' : ''} ${mins} min${mins > 1 ? 's' : ''}`;
@@ -207,7 +322,6 @@ const AttendanceRecords = () => {
           record.clock_in_location || '-'
         ];
       });
-      
       const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n');
       const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
@@ -246,132 +360,106 @@ const AttendanceRecords = () => {
 
   return (
     <div>
-      {/* Statistics Cards */}
-      {/* <div className="stats-grid">
-        <div className="stat-card">
-          <FiCalendar size={32} color="#667eea" />
-          <div className="stat-value">{stats.total}</div>
-          <div>Total Records</div>
-        </div>
-        
-        <div className="stat-card">
-          <FiCheckCircle size={32} color="#28a745" />
-          <div className="stat-value" style={{ color: '#28a745' }}>{stats.present}</div>
-          <div>Present</div>
-        </div>
-        
-        <div className="stat-card">
-          <FiXCircle size={32} color="#dc3545" />
-          <div className="stat-value" style={{ color: '#dc3545' }}>{stats.absent}</div>
-          <div>Absent</div>
-        </div>
-        
-        <div className="stat-card">
-          <FiClock size={32} color="#ffc107" />
-          <div className="stat-value" style={{ color: '#ffc107' }}>{stats.late}</div>
-          <div>Late Arrivals</div>
-        </div>
-        
-        <div className="stat-card">
-          <FiTrendingUp size={32} color="#17a2b8" />
-          <div className="stat-value" style={{ color: '#17a2b8', fontSize: '24px' }}>
-            {formatHoursDecimal(stats.totalHours)}
-          </div>
-          <div>Total Hours</div>
-        </div>
-      </div> */}
-
       {/* Main Card */}
       <div className="card">
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
-          <h3 className="card-title" style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+
+        {/* ── Header ── */}
+        <div className="ar-header">
+          <h3
+            className="card-title ar-header-title"
+            style={{ marginBottom: 0, display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}
+          >
             <FiCalendar />
             Attendance Records
             <span style={{ fontSize: '14px', color: '#666', fontWeight: 'normal' }}>
               ({attendance.length} records)
             </span>
           </h3>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button className="btn-primary" onClick={() => setShowFilters(!showFilters)}
-              style={{ background: '#6c757d', display: 'flex', alignItems: 'center', gap: '5px' }}>
+
+          <div className="ar-header-actions">
+            <button
+              className="btn-primary ar-btn"
+              onClick={() => setShowFilters(!showFilters)}
+              style={{ background: '#6c757d', display: 'flex', alignItems: 'center', gap: '5px' }}
+            >
               <FiFilter /> {showFilters ? 'Hide Filters' : 'Show Filters'}
             </button>
-            <button className="btn-primary" onClick={exportToCSV}
+            <button
+              className="btn-primary ar-btn"
+              onClick={exportToCSV}
               disabled={exporting || attendance.length === 0}
-              style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+            >
               <FiDownload /> {exporting ? 'Exporting...' : 'Export CSV'}
             </button>
           </div>
         </div>
 
-        {/* Filters */}
+        {/* ── Filters ── */}
         {showFilters && (
           <div style={{ marginBottom: '25px', padding: '20px', background: '#f8f9fa', borderRadius: '10px', border: '1px solid #e0e0e0' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '15px' }}>
-              
+            <div className="ar-filters-grid">
+
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label style={{ fontSize: '12px', color: '#666', marginBottom: '5px', display: 'block' }}>
+                <label style={{ fontSize: '12px', color: '#666', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <FiCalendar /> Start Date
                 </label>
-                <input type="date" value={filters.start_date}
+                <input
+                  type="date"
+                  value={filters.start_date}
                   onChange={(e) => setFilters(prev => ({ ...prev, start_date: e.target.value }))}
-                  style={{ width: '100%', padding: '8px' }} />
+                  style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                />
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label style={{ fontSize: '12px', color: '#666', marginBottom: '5px', display: 'block' }}>
+                <label style={{ fontSize: '12px', color: '#666', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <FiCalendar /> End Date
                 </label>
-                <input type="date" value={filters.end_date}
+                <input
+                  type="date"
+                  value={filters.end_date}
                   onChange={(e) => setFilters(prev => ({ ...prev, end_date: e.target.value }))}
-                  style={{ width: '100%', padding: '8px' }} />
+                  style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                />
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label style={{ fontSize: '12px', color: '#666', marginBottom: '5px', display: 'block' }}>
+                <label style={{ fontSize: '12px', color: '#666', marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <FiBriefcase /> Department
                 </label>
-                <select value={filters.department}
+                <select
+                  value={filters.department}
                   onChange={(e) => setFilters(prev => ({ ...prev, department: e.target.value }))}
-                  style={{ width: '100%', padding: '8px' }}>
+                  style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
+                >
                   <option value="">All Departments</option>
                   {departments.map(dept => (
                     <option key={dept} value={dept}>{dept}</option>
                   ))}
                 </select>
               </div>
-
-              {/* <div className="form-group" style={{ marginBottom: 0 }}>
-                <label style={{ fontSize: '12px', color: '#666', marginBottom: '5px', display: 'block' }}>
-                  <FiCheckCircle /> Status
-                </label>
-                <select value={filters.status}
-                  onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                  style={{ width: '100%', padding: '8px' }}>
-                  <option value="">All Status</option>
-                  <option value="present">Present</option>
-                  <option value="absent">Absent</option>
-                  <option value="late">Late</option>
-                  <option value="half_day">Half Day</option>
-                </select>
-              </div> */}
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button className="btn-primary" onClick={handleFilter}
-                style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <div className="ar-filter-actions">
+              <button
+                className="btn-primary"
+                onClick={handleFilter}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
                 <FiSearch /> Apply Filters
               </button>
-              <button onClick={resetFilters}
-                style={{ padding: '8px 16px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <button
+                onClick={resetFilters}
+                style={{ padding: '8px 16px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+              >
                 <FiRefreshCw /> Reset
               </button>
             </div>
           </div>
         )}
 
-        {/* Table */}
+        {/* ── Table ── */}
         {loading ? (
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <div className="spinner"></div>
@@ -384,18 +472,18 @@ const AttendanceRecords = () => {
             <p style={{ color: '#aaa' }}>Try adjusting your filters or check back later</p>
           </div>
         ) : (
-          <div className="table-container" style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', minWidth: '800px' }}>
+          <div className="ar-table-wrapper">
+            <table className="ar-table">
               <thead>
-                <tr style={{ background: '#f8f9fa' }}>
-                  <th style={{ padding: '12px' }}>Employee</th>
-                  <th style={{ padding: '12px' }}>Department</th>
-                  <th style={{ padding: '12px' }}>Date</th>
-                  <th style={{ padding: '12px' }}>Clock In</th>
-                  <th style={{ padding: '12px' }}>Clock Out</th>
-                  <th style={{ padding: '12px' }}>Total Hours</th>
-                  <th style={{ padding: '12px' }}>Status</th>
-                  <th style={{ padding: '12px' }}>Location</th>
+                <tr>
+                  <th>Employee</th>
+                  <th className="ar-dept-col">Department</th>
+                  <th>Date</th>
+                  <th>Clock In</th>
+                  <th>Clock Out</th>
+                  <th>Total Hours</th>
+                  <th>Status</th>
+                  <th className="ar-location-col">Location</th>
                 </tr>
               </thead>
               <tbody>
@@ -404,46 +492,36 @@ const AttendanceRecords = () => {
                   const clockInTime = formatTime(record.clock_in_time);
                   const clockOutTime = formatTime(record.clock_out_time);
                   const dateStr = formatDate(record.attendance_date);
-                  
+
                   return (
-                    <tr key={record.id} style={{ borderBottom: '1px solid #e0e0e0' }}>
-                      <td style={{ padding: '12px' }}>
+                    <tr key={record.id}>
+                      <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <FiUser style={{ color: '#667eea' }} />
-                          <strong>{record.full_name}</strong>
+                          <FiUser style={{ color: '#667eea', flexShrink: 0 }} />
+                          <strong style={{ whiteSpace: 'nowrap' }}>{record.full_name}</strong>
                         </div>
+                        {/* Show dept under name on mobile (since dept col is hidden) */}
                         <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
                           {record.department || '-'}
                         </div>
                       </td>
-                      <td style={{ padding: '12px' }}>{record.department || '-'}</td>
-                      <td style={{ padding: '12px', fontWeight: '500' }}>{dateStr}</td>
-                      <td style={{ padding: '12px' }}>
+                      <td className="ar-dept-col">{record.department || '-'}</td>
+                      <td style={{ fontWeight: '500' }}>{dateStr}</td>
+                      <td>
                         {clockInTime !== '-' ? (
-                          <span style={{ color: '#28a745', fontWeight: '500' }}>
-                            {clockInTime}
-                          </span>
+                          <span style={{ color: '#28a745', fontWeight: '500' }}>{clockInTime}</span>
                         ) : '-'}
                       </td>
-                      <td style={{ padding: '12px' }}>
+                      <td>
                         {clockOutTime !== '-' ? (
-                          <span style={{ color: '#dc3545', fontWeight: '500' }}>
-                            {clockOutTime}
-                          </span>
+                          <span style={{ color: '#dc3545', fontWeight: '500' }}>{clockOutTime}</span>
                         ) : '-'}
                       </td>
-                      <td style={{ padding: '12px', fontWeight: 'bold', color: '#17a2b8' }}>
-                        {hours > 0 ? (
-                          <>
-                            {formatHours(hours)}
-                            {/* <span style={{ fontSize: '11px', color: '#999', marginLeft: '5px' }}>
-                              ({hours.toFixed(2)} hrs)
-                            </span> */}
-                          </>
-                        ) : '-'}
+                      <td style={{ fontWeight: 'bold', color: '#17a2b8' }}>
+                        {hours > 0 ? formatHours(hours) : '-'}
                       </td>
-                      <td style={{ padding: '12px' }}>{getStatusBadge(record.status)}</td>
-                      <td style={{ padding: '12px', fontSize: '12px', color: '#666' }}>
+                      <td>{getStatusBadge(record.status)}</td>
+                      <td className="ar-location-col" style={{ fontSize: '12px', color: '#666' }}>
                         {record.clock_in_location ? (
                           <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                             <FiMapPin size={12} /> {record.clock_in_location}
@@ -458,15 +536,15 @@ const AttendanceRecords = () => {
           </div>
         )}
 
-        {/* Footer Summary */}
+        {/* ── Footer Summary ── */}
         {!loading && attendance.length > 0 && (
-          <div style={{ marginTop: '20px', padding: '15px', background: '#f8f9fa', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <div className="ar-footer">
             <div>
               <span style={{ color: '#666' }}>Showing </span>
               <strong>{attendance.length}</strong>
               <span style={{ color: '#666' }}> records</span>
             </div>
-            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
+            <div className="ar-footer-stats">
               <div>
                 <span style={{ color: '#28a745' }}>● Present:</span>
                 <strong style={{ marginLeft: '5px' }}>{stats.present}</strong>
@@ -481,10 +559,7 @@ const AttendanceRecords = () => {
               </div>
               <div>
                 <span style={{ color: '#17a2b8' }}>⏱ Total Hours:</span>
-                <strong style={{ marginLeft: '5px' }}>
-                  {/* {formatHours(stats.totalHours)}  */}
-                  {stats.totalHours.toFixed(2)} hrs
-                </strong>
+                <strong style={{ marginLeft: '5px' }}>{stats.totalHours.toFixed(2)} hrs</strong>
               </div>
             </div>
           </div>
