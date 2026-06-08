@@ -250,7 +250,7 @@ const Sidebar = () => {
       </nav>
 
       {/* Logout */}
-      <div style={{ padding: '12px', borderTop: '1px solid #f0f0f0', flexShrink: 0 }}>
+      <div style={{ padding: '12px', borderTop: '1px solid #f0f0f0', flexShrink: 0,paddingBottom:"110px" }}>
         <button
           onClick={handleLogout}
           style={{
