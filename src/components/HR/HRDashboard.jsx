@@ -108,7 +108,8 @@ const HrDashboard = () => {
             <div className="stat-card">
               <FiTrendingUp size={32} color="#17a2b8" />
               <div className="stat-value" style={{ color: '#17a2b8', fontSize: '24px' }}>
-                {formatHoursDecimal(stats.totalHours)}
+                {/* {formatHoursDecimal(stats.totalHours)} */}
+                {stats.totalHours.toFixed(1)}
               </div>
               <div>Total Hours</div>
             </div>

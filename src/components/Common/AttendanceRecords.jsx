@@ -436,9 +436,9 @@ const AttendanceRecords = () => {
                         {hours > 0 ? (
                           <>
                             {formatHours(hours)}
-                            <span style={{ fontSize: '11px', color: '#999', marginLeft: '5px' }}>
+                            {/* <span style={{ fontSize: '11px', color: '#999', marginLeft: '5px' }}>
                               ({hours.toFixed(2)} hrs)
-                            </span>
+                            </span> */}
                           </>
                         ) : '-'}
                       </td>
