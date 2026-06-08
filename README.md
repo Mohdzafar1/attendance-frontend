@@ -2,6 +2,29 @@
 
 A modern, responsive React-based frontend for the Attendance Management System. Provides role-based dashboards for **Admin**, **HR**, and **Employees** with attendance marking, correction requests, user management, and real-time analytics.
 
+##Admin Panel
+<img width="1917" height="922" alt="image" src="https://github.com/user-attachments/assets/7eb4c05b-86eb-4af8-8c27-a1c7e31f4597" />
+
+<img width="1920" height="925" alt="image" src="https://github.com/user-attachments/assets/ecfb268f-a0df-476f-8a5b-2add698ecd6f" />
+
+<img width="1920" height="923" alt="image" src="https://github.com/user-attachments/assets/e12c5fbb-4851-4212-b79d-44ae204b9a98" />
+
+<img width="1920" height="925" alt="image" src="https://github.com/user-attachments/assets/74a024cf-0e99-413d-ac40-77de7f774180" />
+
+##Hr Panel
+<img width="1917" height="922" alt="image" src="https://github.com/user-attachments/assets/e82b047a-0889-4210-bd68-1cfcd7afc68f" />
+
+<img width="1920" height="920" alt="image" src="https://github.com/user-attachments/assets/9f0f8eea-ac12-40a7-9b6f-914dbf9752b6" />
+
+##Employe Panel
+<img width="1920" height="921" alt="image" src="https://github.com/user-attachments/assets/62fd8147-4eb0-4311-adf4-aeedd036093c" />
+
+<img width="1920" height="922" alt="image" src="https://github.com/user-attachments/assets/b51bdda8-41af-4123-b9d4-bffc13eb746b" />
+
+<img width="1920" height="918" alt="image" src="https://github.com/user-attachments/assets/f39fbb33-da91-45a1-bb3a-0d2ad555abb7" />
+<img width="1920" height="921" alt="image" src="https://github.com/user-attachments/assets/23813ac3-7995-4225-9280-c3dde549206b" />
+
+
 ---
 
 ## 📋 Table of Contents
