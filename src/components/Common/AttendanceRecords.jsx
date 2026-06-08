@@ -482,7 +482,8 @@ const AttendanceRecords = () => {
               <div>
                 <span style={{ color: '#17a2b8' }}>⏱ Total Hours:</span>
                 <strong style={{ marginLeft: '5px' }}>
-                  {formatHours(stats.totalHours)} ({stats.totalHours.toFixed(2)} hrs)
+                  {/* {formatHours(stats.totalHours)}  */}
+                  {stats.totalHours.toFixed(2)} hrs
                 </strong>
               </div>
             </div>
